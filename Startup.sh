@@ -15,11 +15,11 @@ timedatectl set-timezone Europe/Berlin
 echo "Zeitzone wurde gesetzt."
 
 echo "===================================================="
-echo "==== Schritt 2: Erstelle Benutzer 'lbb' (falls nötig) ===="
+echo "==== Schritt 2: Erstelle Benutzer (falls nötig) ===="
 echo "===================================================="
 
-USERNAME="lbb"
-PASSWORD="CA7yt*G3mtj%dLrs"
+USERNAME="SETUSERNAME"
+PASSWORD="SETPASSWORD"
 
 if id "$USERNAME" &>/dev/null; then
     echo "Benutzer $USERNAME existiert bereits."
@@ -47,10 +47,11 @@ touch "$AUTHORIZED_KEYS"
 chmod 700 "$SSH_DIR"
 chmod 600 "$AUTHORIZED_KEYS"
 chown -R "$USERNAME:$USERNAME" "$SSH_DIR"
+GITHUBUSER="SETUSERNAME"
 
-echo "Lade SSH-Keys von GitHub-Benutzer 'LucaBeckmann'..."
+echo "Lade SSH-Keys von GitHub-Benutzer
 
-curl -s https://github.com/LucaBeckmann.keys | while read -r key; do
+curl -s https://github.com/$GITHUBUSER.keys | while read -r key; do
     if grep -Fxq "$key" "$AUTHORIZED_KEYS"; then
         echo "Key bereits vorhanden – wird übersprungen."
     else

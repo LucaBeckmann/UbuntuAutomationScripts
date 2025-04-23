@@ -115,13 +115,15 @@ log "SSH configuration updated to allow only key-based login."
 conf_dir="/etc/ssh/sshd_config.d"
 conf_updated=false
 
-for file in "$conf_dir"/*.conf 2>/dev/null; do
+shopt -s nullglob
+for file in "$conf_dir"/*.conf; do
     if grep -q "^PasswordAuthentication" "$file"; then
         sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' "$file"
         log "PasswordAuthentication disabled in $file"
         conf_updated=true
     fi
 done
+shopt -u nullglob
 
 if [ "$conf_updated" = false ]; then
     echo -e "# Disable password authentication\nPasswordAuthentication no" > "$conf_dir/10-disable-password.conf"

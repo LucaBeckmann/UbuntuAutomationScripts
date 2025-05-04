@@ -1,5 +1,7 @@
 #!/bin/bash
 
+
+
 LOGFILE="/var/log/user_setup.log"
 
 # Logging function

@@ -17,20 +17,40 @@ fi
 set -e
 
 log "===================================================="
-log "==== Step 1: Set timezone to Europe/Berlin     ===="
+log "==== Step 1: Set system timezone               ===="
 log "===================================================="
-timedatectl set-timezone Europe/Berlin
-log "Timezone set to Europe/Berlin."
+while true; do
+    read -rp "Enter your desired timezone (e.g., Europe/Berlin): " TIMEZONE
+    if timedatectl list-timezones | grep -qx "$TIMEZONE"; then
+        timedatectl set-timezone "$TIMEZONE"
+        log "Timezone set to $TIMEZONE."
+        break
+    else
+        echo "Invalid timezone. Please try again."
+    fi
+done
 
 log "===================================================="
-log "==== Step 2: Start user interaction            ===="
+log "==== Step 2: Set hostname                      ===="
+log "===================================================="
+read -rp "Enter a hostname for this server: " CUSTOM_HOSTNAME
+log "Setting hostname to: $CUSTOM_HOSTNAME"
+hostnamectl set-hostname "$CUSTOM_HOSTNAME"
+
+# Save hostname for use in MOTD
+echo "$CUSTOM_HOSTNAME" > /etc/motd_hostname.conf
+chmod 644 /etc/motd_hostname.conf
+log "Hostname saved to /etc/motd_hostname.conf."
+
+log "===================================================="
+log "==== Step 3: User setup                        ===="
 log "===================================================="
 
-# Ask for username
+# Prompt for username
 read -rp "Enter desired username: " USERNAME
 log "Username to create: $USERNAME"
 
-# Ask for password twice and compare
+# Prompt for password twice
 while true; do
     read -rsp "Enter password: " PASSWORD1
     echo
@@ -46,12 +66,12 @@ while true; do
     fi
 done
 
-# Ask for GitHub username
+# GitHub username for SSH keys
 read -rp "GitHub username to fetch SSH keys from: " GITHUB_USER
 log "GitHub user for SSH keys: $GITHUB_USER"
 
 log "===================================================="
-log "==== Step 3: Create user $USERNAME              ===="
+log "==== Step 4: Create user $USERNAME             ===="
 log "===================================================="
 
 if id "$USERNAME" &>/dev/null; then
@@ -68,7 +88,7 @@ usermod -aG sudo "$USERNAME"
 log "$USERNAME now has sudo privileges."
 
 log "===================================================="
-log "==== Step 4: Setup SSH directory & import key   ===="
+log "==== Step 5: Configure SSH access              ===="
 log "===================================================="
 
 USER_HOME="/home/$USERNAME"
@@ -94,7 +114,7 @@ done
 chown "$USERNAME:$USERNAME" "$AUTHORIZED_KEYS"
 
 log "===================================================="
-log "==== Step 5: Harden SSH configuration           ===="
+log "==== Step 6: Harden SSH configuration          ===="
 log "===================================================="
 
 cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
@@ -131,8 +151,56 @@ if [ "$conf_updated" = false ]; then
 fi
 
 systemctl restart ssh
-log "SSH service restarted. Only key login is now enabled."
+log "SSH service restarted. Password logins are now disabled."
 
 log "===================================================="
-log "==== All steps completed. System is ready!      ===="
+log "==== Step 7: Setup login MOTD script           ===="
+log "===================================================="
+
+MOTD_SCRIPT="/etc/profile.d/login_motd.sh"
+
+cat <<'EOF' > "$MOTD_SCRIPT"
+#!/bin/bash
+
+# Load server name
+if [ -f /etc/motd_hostname.conf ]; then
+    SERVER_NAME=$(cat /etc/motd_hostname.conf)
+else
+    SERVER_NAME=$(hostname)
+fi
+
+# Get server IP
+SERVER_IP=$(hostname -I | awk '{print $1}')
+
+# Get client IP (SSH only)
+if [[ -n "$SSH_CONNECTION" ]]; then
+    CLIENT_IP=$(echo $SSH_CONNECTION | awk '{print $1}')
+else
+    CLIENT_IP="local/unknown"
+fi
+
+echo "=============================================="
+echo "🖥️  Welcome to $SERVER_NAME ($SERVER_IP)"
+echo "🔑  Logged in from: $CLIENT_IP"
+echo "----------------------------------------------"
+
+# Show update status (Debian/Ubuntu)
+if command -v apt &>/dev/null; then
+    UPDATES=$(apt list --upgradeable 2>/dev/null | grep -v "Listing..." | wc -l)
+    if [ "$UPDATES" -gt 0 ]; then
+        echo "📦 $UPDATES package(s) can be updated."
+    else
+        echo "✅ System is up to date."
+    fi
+fi
+
+echo "=============================================="
+echo
+EOF
+
+chmod +x "$MOTD_SCRIPT"
+log "MOTD script created at $MOTD_SCRIPT"
+
+log "===================================================="
+log "==== Setup complete. System is ready!           ===="
 log "===================================================="

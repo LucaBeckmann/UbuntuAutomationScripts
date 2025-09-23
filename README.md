@@ -17,8 +17,8 @@ Requirements:
 
 Usage:
 - Clone or download this repository
-- Make the script executable: chmod +x user_and_system_setup.sh
-- Run the script as root: sudo ./user_and_system_setup.sh
+- Make the script executable: chmod +x system-and-user-setup.sh
+- Run the script as root: sudo ./system-and-user-setup.sh
 
 Notes:
 - After completion, password-based SSH login will be disabled. Ensure you provide a valid GitHub username with uploaded SSH keys.

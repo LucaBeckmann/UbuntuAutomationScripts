@@ -16,7 +16,8 @@ Requirements:
 - Internet access (required for fetching GitHub SSH keys)
 
 Usage:
-- Clone or download this repository
+- Clone or download this repository:
+https://raw.githubusercontent.com/LucaBeckmann/UbuntuAutomationScripts/main/Initial-System-Setup/system-and-user-setup.sh
 - Make the script executable: chmod +x system-and-user-setup.sh
 - Run the script as root: sudo ./system-and-user-setup.sh
 
